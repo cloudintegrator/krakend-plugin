@@ -53,11 +53,11 @@ func (r registerer) registerHandlers(_ context.Context, extra map[string]interfa
 		logger.Info("########## Authorization: ", auth)
 
 		// Send the token to NATS.
-		sendDataToNats(req)
+		sendDataToNats(w, req)
 	}), nil
 }
 
-func sendDataToNats(req *http.Request) {
+func sendDataToNats(w http.ResponseWriter, req *http.Request) {
 	logger.Info("########## Sending data to NATS.")
 	var data BillingData
 	err := json.NewDecoder(req.Body).Decode(&data)
@@ -65,7 +65,15 @@ func sendDataToNats(req *http.Request) {
 		logger.Error(err)
 		return
 	}
-	logger.Info("########## Payment:", data.payment)
+	logger.Info("########## Data:", data.Client)
+	logger.Info("########## Payment:", data.Payment)
+	if data.Payment {
+		logger.Info("########## Payment will be sent to NATS.")
+		fmt.Fprintf(w, "Payment will be sent to NATS.")
+	} else {
+		logger.Info("########## Payment cancelled.")
+		fmt.Fprintf(w, "Payment cancelled.")
+	}
 }
 
 func main() {
@@ -89,8 +97,8 @@ func (registerer) RegisterLogger(v interface{}) {
 }
 
 type BillingData struct {
-	client  string
-	payment bool
+	Client  string `json:"client"`
+	Payment bool   `json:"payment"`
 }
 
 type Logger interface {
