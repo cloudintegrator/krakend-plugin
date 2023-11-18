@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html"
@@ -48,9 +49,23 @@ func (r registerer) registerHandlers(_ context.Context, extra map[string]interfa
 			return
 		}
 
-		logger.Info("request:", html.EscapeString(req.URL.Path))
+		logger.Info("########## Request path:", html.EscapeString(req.URL.Path))
 		logger.Info("########## Authorization: ", auth)
+
+		// Send the token to NATS.
+		sendDataToNats(req)
 	}), nil
+}
+
+func sendDataToNats(req *http.Request) {
+	logger.Info("########## Sending data to NATS.")
+	var data BillingData
+	err := json.NewDecoder(req.Body).Decode(&data)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	logger.Info("########## Payment:", data.payment)
 }
 
 func main() {
@@ -71,6 +86,11 @@ func (registerer) RegisterLogger(v interface{}) {
 	}
 	logger = l
 	logger.Info(fmt.Sprintf("[PLUGIN: %s] Logger loaded", HandlerRegisterer))
+}
+
+type BillingData struct {
+	client  string
+	payment bool
 }
 
 type Logger interface {

@@ -10,3 +10,14 @@ docker run -it -v "$PWD:/app" -w /app krakend/builder:2.5.0 go build -buildmode=
 ```
 docker run -it --rm --name nats -p "8080:8080" -v $PWD:/etc/krakend/ devopsfaith/krakend:2.5.0 run -c krakend.json
 ```
+
+### Request example
+```
+curl --location --request GET 'http://localhost:8080/billing' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer XXXXXXXX' \
+--data '{
+    "client": 123,
+    "payment": true
+}'
+```
