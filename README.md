@@ -23,7 +23,7 @@ curl --location 'http://localhost:8080/billing' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer XXXXXXXX' \
 --data '{
-    "client": "123",
-    "payment": true
+    "client": 123,
+    "payment": false
 }'
 ```

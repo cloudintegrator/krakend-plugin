@@ -41,16 +41,6 @@ func (r registerer) registerHandlers(_ context.Context, extra map[string]interfa
 			return
 		}
 
-		// Intercept the Authorization header.
-		auth := req.Header.Get("Authorization")
-		if auth == "" {
-			logger.Info("Please send Authorization header")
-			return
-		}
-
-		logger.Info("########## Request path:", html.EscapeString(req.URL.Path))
-		logger.Info("########## Authorization: ", auth)
-
 		// Send the token to NATS.
 		sendDataToNats(w, req)
 	}), nil
@@ -58,20 +48,55 @@ func (r registerer) registerHandlers(_ context.Context, extra map[string]interfa
 
 func sendDataToNats(w http.ResponseWriter, req *http.Request) {
 	logger.Info("########## Sending data to NATS.")
+	resp := make(map[string]string)
+	w.Header().Set("Content-Type", "application/json")
+
+	// Intercept the Authorization header.
+	auth := req.Header.Get("Authorization")
+	if auth == "" {
+		logger.Info("Missing Authorization header")
+		resp["msg"] = "Missing Authorization header"
+		w.WriteHeader(http.StatusForbidden)
+		jsonResp, err := json.Marshal(resp)
+		if err != nil {
+			logger.Error(err)
+		}
+		w.Write(jsonResp)
+		return
+	}
+
+	logger.Info("########## Request path:", html.EscapeString(req.URL.Path))
+	logger.Info("########## Authorization: ", auth)
+
 	var data BillingData
 	err := json.NewDecoder(req.Body).Decode(&data)
 	if err != nil {
 		logger.Error(err)
 		return
 	}
+
+	// Intercept request payload.
 	logger.Info("########## Data:", data.Client)
 	logger.Info("########## Payment:", data.Payment)
+
 	if data.Payment {
 		logger.Info("########## Payment will be sent to NATS.")
-		fmt.Fprintf(w, "Payment will be sent to NATS.")
+		resp["msg"] = "Payment will be sent to NATS."
+		w.WriteHeader(http.StatusCreated)
+		jsonResp, err := json.Marshal(resp)
+		if err != nil {
+			logger.Error(err)
+		}
+		w.Write(jsonResp)
 	} else {
 		logger.Info("########## Payment cancelled.")
-		fmt.Fprintf(w, "Payment cancelled.")
+		resp["msg"] = "Payment cancelled."
+		w.WriteHeader(http.StatusForbidden)
+		jsonResp, err := json.Marshal(resp)
+		if err != nil {
+			logger.Error(err)
+		}
+		w.Write(jsonResp)
 	}
 }
 
@@ -96,8 +121,8 @@ func (registerer) RegisterLogger(v interface{}) {
 }
 
 type BillingData struct {
-	Client  string `json:"client"`
-	Payment bool   `json:"payment"`
+	Client  int32 `json:"client"`
+	Payment bool  `json:"payment"`
 }
 
 type Logger interface {
