@@ -23,9 +23,9 @@
     "extra_config": {
         "plugin/http-server": {
             "name": [
-                "krakend-nats-plugin"
+                "krakend-plugin"
             ],
-            "krakend-nats-plugin": {
+            "krakend-plugin": {
                 "path": "/billing"
             }
         }

@@ -1,4 +1,4 @@
-module kraken-nats-plugin
+module kraken-plugin
 
 go 1.21
 

@@ -3,8 +3,9 @@
 export DOCKER_BUILDKIT=0                                                                                                                                                    
 export COMPOSE_DOCKER_CLI_BUILD=0
 export DOCKER_DEFAULT_PLATFORM=linux/amd64
-
-docker run -it -v "$PWD:/app" -w /app krakend/builder:2.5.0 go build -buildmode=plugin -o plugin/krakend-nats-plugin.so .
+```
+```
+docker run -it -v "$PWD:/app" -w /app krakend/builder:2.5.0 go build -buildmode=plugin -o plugin/krakend-plugin.so .
 ```
 ### Run
 ```
