@@ -1,3 +1,8 @@
+### Introduction
+A demo plugin for the KrakenD
+- Go version: 1.20.11
+- Krakend version: 2.5
+
 ### Build with Docker
 ```
 export DOCKER_BUILDKIT=0                                                                                                                                                    
@@ -14,11 +19,11 @@ docker run -it --rm --name nats -p "8080:8080" -v $PWD:/etc/krakend/ devopsfaith
 
 ### Request example
 ```
-curl --location --request GET 'http://localhost:8080/billing' \
+curl --location 'http://localhost:8080/billing' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer XXXXXXXX' \
 --data '{
-    "client": 123,
+    "client": "123",
     "payment": true
 }'
 ```

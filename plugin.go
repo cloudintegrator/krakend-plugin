@@ -41,8 +41,7 @@ func (r registerer) registerHandlers(_ context.Context, extra map[string]interfa
 			return
 		}
 
-		// The path has to be hijacked:
-		fmt.Fprintf(w, "Hello, %q", html.EscapeString(req.URL.Path))
+		// Intercept the Authorization header.
 		auth := req.Header.Get("Authorization")
 		if auth == "" {
 			logger.Info("Please send Authorization header")
