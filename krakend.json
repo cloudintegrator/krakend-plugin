@@ -1,0 +1,33 @@
+{
+    "version": 3,
+    "name": "KrakenD - API Gateway",
+    "port": 8080,
+    "plugin": {
+        "pattern": ".so",
+        "folder": "./plugin/"
+    },
+    "endpoints": [
+        {
+            "endpoint": "/",
+            "method": "GET",
+            "backend": [
+                {
+                    "url_pattern": "/ip",
+                    "host": [
+                        "http://httpbin.org/"
+                    ]
+                }
+            ]
+        }
+    ],
+    "extra_config": {
+        "plugin/http-server": {
+            "name": [
+                "krakend-nats-plugin"
+            ],
+            "krakend-nats-plugin": {
+                "path": "/billing"
+            }
+        }
+    }
+}
