@@ -26,7 +26,9 @@
                 "krakend-plugin"
             ],
             "krakend-plugin": {
-                "path": "/billing"
+                "path": "/billing",
+                "nats_url": "nats://127.0.0.1:4222",
+                "nats_topic": "FOO"
             }
         }
     }

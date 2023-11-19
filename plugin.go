@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/nats-io/nats.go"
 	"html"
 	"net/http"
 )
@@ -51,7 +52,12 @@ func (r registerer) registerHandlers(_ context.Context, extra map[string]interfa
 		} else if err != nil {
 			resp = createResponse(err.Error(), http.StatusInternalServerError)
 		} else {
-			sendToNats(token, data)
+			err = sendToNats(token, data, config)
+			if err == nil {
+				resp = createResponse("Payment has been published to NATS", http.StatusCreated)
+			} else {
+				resp = createResponse(err.Error(), http.StatusInternalServerError)
+			}
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(resp)
@@ -67,9 +73,22 @@ func createResponse(msg string, statusCode int32) []byte {
 	jsonResp, _ := json.Marshal(resp)
 	return jsonResp
 }
-func sendToNats(token string, data BillingData) {
 
+// sendToNats sends request paylaod to NATS server.
+func sendToNats(token string, data BillingData, config map[string]interface{}) error {
+	logger.Info("########## Sending data to NATS.")
+	nats_url := config["nats_url"].(string)
+	nats_topic := config["nats_topic"].(string)
+
+	nc, err := nats.Connect(nats_url)
+	if err == nil {
+		barray, _ := json.Marshal(data)
+		nc.Publish(nats_topic, barray)
+	}
+	return err
 }
+
+// validateRequest validates the incoming request to check Authorization header and returns the paylaod in BillingData format.
 func validateRequest(w http.ResponseWriter, req *http.Request) (string, bool, BillingData, error) {
 	logger.Info("########## Validate incoming request.")
 
@@ -86,7 +105,7 @@ func validateRequest(w http.ResponseWriter, req *http.Request) (string, bool, Bi
 	}
 	logger.Info("########## Data:", data.Client)
 	logger.Info("########## Payment:", data.Payment)
-	return token, data.Payment, data, nil
+	return token, data.Payment, data, err
 }
 
 // This logger is replaced by the RegisterLogger method to load the one from KrakenD
