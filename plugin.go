@@ -30,7 +30,7 @@ func (r registerer) registerHandlers(_ context.Context, extra map[string]interfa
 
 	// Path to be intercepted in extra_config.path property.
 	path, _ := config["path"].(string)
-	logger.Info(fmt.Sprintf("The plugin is now hijacking the path %s", path))
+	logger.Info("########## Plugin configuration:", config)
 
 	// Handle the request for the path.
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -41,71 +41,52 @@ func (r registerer) registerHandlers(_ context.Context, extra map[string]interfa
 			return
 		}
 
-		// Send the token to NATS.
-		sendDataToNats(w, req)
+		// validateRequest validates the request.
+		var resp []byte
+		token, payment, data, err := validateRequest(w, req)
+		if token == "" {
+			resp = createResponse("Missing Authorization header", http.StatusForbidden)
+		} else if !payment {
+			resp = createResponse("Payment cancelled", http.StatusForbidden)
+		} else if err != nil {
+			resp = createResponse(err.Error(), http.StatusInternalServerError)
+		} else {
+			sendToNats(token, data)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(resp)
+		//
+
 	}), nil
 }
 
-func sendDataToNats(w http.ResponseWriter, req *http.Request) {
-	logger.Info("########## Sending data to NATS.")
+// createResponse creates JSON response to the consumer.
+func createResponse(msg string, statusCode int32) []byte {
 	resp := make(map[string]string)
-	w.Header().Set("Content-Type", "application/json")
+	resp["msg"] = msg
+	jsonResp, _ := json.Marshal(resp)
+	return jsonResp
+}
+func sendToNats(token string, data BillingData) {
+
+}
+func validateRequest(w http.ResponseWriter, req *http.Request) (string, bool, BillingData, error) {
+	logger.Info("########## Validate incoming request.")
 
 	// Intercept the Authorization header.
-	auth := req.Header.Get("Authorization")
-	if auth == "" {
-		logger.Info("Missing Authorization header")
-		resp["msg"] = "Missing Authorization header"
-		w.WriteHeader(http.StatusForbidden)
-		jsonResp, err := json.Marshal(resp)
-		if err != nil {
-			logger.Error(err)
-		}
-		w.Write(jsonResp)
-		return
-	}
-
+	token := req.Header.Get("Authorization")
 	logger.Info("########## Request path:", html.EscapeString(req.URL.Path))
-	logger.Info("########## Authorization: ", auth)
+	logger.Info("########## Authorization: ", token)
 
+	// Intercept request payload.
 	var data BillingData
 	err := json.NewDecoder(req.Body).Decode(&data)
 	if err != nil {
 		logger.Error(err)
-		return
 	}
-
-	// Intercept request payload.
 	logger.Info("########## Data:", data.Client)
 	logger.Info("########## Payment:", data.Payment)
-
-	if data.Payment {
-		logger.Info("########## Payment will be sent to NATS.")
-		resp["msg"] = "Payment will be sent to NATS."
-		w.WriteHeader(http.StatusCreated)
-		jsonResp, err := json.Marshal(resp)
-		if err != nil {
-			logger.Error(err)
-		}
-		w.Write(jsonResp)
-	} else {
-		logger.Info("########## Payment cancelled.")
-		resp["msg"] = "Payment cancelled."
-		w.WriteHeader(http.StatusForbidden)
-		jsonResp, err := json.Marshal(resp)
-		if err != nil {
-			logger.Error(err)
-		}
-		w.Write(jsonResp)
-	}
-}
-
-func main() {
-	//p, err := plugin.Open("/Users/anupam.gogoi.br/projects/go/krakend-plugin/plugin/krakend-plugin.plugin")
-	//if err != nil {
-	//
-	//}
-	//fmt.Println(p)
+	return token, data.Payment, data, nil
 }
 
 // This logger is replaced by the RegisterLogger method to load the one from KrakenD
