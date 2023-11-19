@@ -1,5 +1,5 @@
 ### Introduction
-A demo plugin for the KrakenD API Gateway. The plugin simply intercept the incoming request for the **/billing** endpoint and
+A demo plugin for the KrakenD API Gateway. The plugin simply intercepts the incoming request for the **/billing** endpoint and
 send the payload to a NATS server.
 
 ## Prerequisites

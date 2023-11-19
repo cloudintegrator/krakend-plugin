@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/nats-io/nats.go"
 	"html"
 	"net/http"
 )
@@ -77,15 +76,17 @@ func createResponse(msg string, statusCode int32) []byte {
 // sendToNats sends request paylaod to NATS server.
 func sendToNats(token string, data BillingData, config map[string]interface{}) error {
 	logger.Info("########## Sending data to NATS.")
-	nats_url := config["nats_url"].(string)
-	nats_topic := config["nats_topic"].(string)
 
-	nc, err := nats.Connect(nats_url)
-	if err == nil {
-		barray, _ := json.Marshal(data)
-		nc.Publish(nats_topic, barray)
-	}
-	return err
+	// ERROR:  plugin was built with a different version of package github.com/nats-io/nats.go/encoders/builtin
+	//nats_url := config["nats_url"].(string)
+	//nats_topic := config["nats_topic"].(string)
+	//
+	//nc, err := nats.Connect(nats_url)
+	//if err == nil {
+	//	barray, _ := json.Marshal(data)
+	//	nc.Publish(nats_topic, barray)
+	//}
+	return nil
 }
 
 // validateRequest validates the incoming request to check Authorization header and returns the paylaod in BillingData format.
