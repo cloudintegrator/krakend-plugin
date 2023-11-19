@@ -11,7 +11,11 @@ func TestCreateResponse(t *testing.T) {
 
 	var resp map[string]string
 	json.Unmarshal(b, &resp)
-
+	if resp["msg"] == "Test" {
+		t.Logf("Success")
+	} else {
+		t.Errorf("Fail")
+	}
 }
 
 func TestSendToNats(t *testing.T) {
@@ -22,5 +26,10 @@ func TestSendToNats(t *testing.T) {
 		Client:  0,
 		Payment: false,
 	}
-	sendToNats("xxxxx", data, config)
+	err := sendToNats("xxxxx", data, config)
+	if err != nil {
+		t.Logf("Success")
+	} else {
+		t.Errorf("Fail")
+	}
 }
